@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: media, images, image, tinypng, upload, png, resize, shrink
 Requires at least: 3.0.1
 Tested up to: 3.8
-Stable tag: 1.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,10 @@ Make sure to enter in your API key obtained from [TinyPNG]( https://tinypng.com/
 
 Each plan with TinyPNG has a limit of monthly requests. For example the free plan only allows 500 requests per month. If you would like to see how many requests you have made or even upgrade your plan, enter in your email in the 'Already Subscribed' box on the [TinyPNG Developers]( https://tinypng.com/developers) page. Follow the link in the email that you receive to see your API subscription page.
 
+= I get an error message sometimes stating; the php curl extension is not enabled. Compress PNG for WP will not be functional without the use of curl, what is wrong? =
+
+Compress PNG for WP uses the cURL php extension which most servers should already have installed. If you are receiving this message, check with your hosting provider to see if cURL can be enabled. [Read More Here]( http://us1.php.net/manual/en/book.curl.php).
+
 
 == Screenshots ==
 
@@ -52,6 +56,9 @@ Each plan with TinyPNG has a limit of monthly requests. For example the free pla
 
 
 == Changelog ==
+
+= 1.0.1 =
+*Fix where curl extension is not enabled, now displays error message and allows file upload.
 
 = 1.0 =
 *Initial release
