@@ -4,7 +4,7 @@
  *	Plugin Name: Compress PNG for WP
  *	Plugin URI: http://www.geckodesigns.com
  *	Description: Compress PNG files using the TinyPNG API.
- *	Version: 1.0
+ *	Version: 1.0.2
  *	Author: Gecko Designs
  *	Author URI: http://www.geckodesigns.com
  *	License: GPLv2
@@ -18,18 +18,43 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 		private $url = 'https://api.tinypng.com/shrink';
 
 		public function __construct() {
+
 			define( 'GD_TINY_PNG_META', 'tiny_png_response' );
-			define( 'GD_PLUGIN_NAME', 'Compress PNG for WP');
+			define( 'GD_PLUGIN_NAME', 'Compress PNG for WP' );
 			$is_auto_shrink = get_option( 'gd_tiny_png_auto_shrink', 'on' );
+
 			if ( 'on' == $is_auto_shrink ) {
 				add_filter( 'wp_generate_attachment_metadata', array( &$this, 'parse_meta_data' ), 10, 2 );
+			}else {
+
 			}
-			
+
 			add_filter( 'manage_media_columns', array( &$this, 'add_gd_tiny_png_media_column' ) );
 			add_action( 'manage_media_custom_column', array( &$this, 'render_gd_tiny_png_media_column' ), 10, 2 );
 			add_action( 'admin_action_gd_tinypng_compress_existing', array( &$this, 'compress_existing' ) );
 			add_action( 'admin_init', array( &$this, 'setup_gd_tiny_png_settings' ) );
+
+			if ( !function_exists( 'curl_init' ) ) {
+				add_action( 'admin_notices', array( &$this, 'no_curl_admin_notices' ) );
+			}
+
 		}
+
+		/**
+		 * Displays error message in plugins page, media library, and new media pages.
+		 */
+		function no_curl_admin_notices() {
+			global $pagenow;
+			if ( 'plugins.php' == $pagenow ) {
+				echo "<div class='error'> The php curl extension is not enabled.
+					Compress PNG for WP will not be functional without the use of curl.</div>";
+			}elseif ( 'media-new.php' == $pagenow || 'upload.php' == $pagenow ) {
+				echo "<div class='error'> The php curl extension is not enabled.
+					Compress PNG for WP will not compress any png files.</div>";
+			}
+
+		}
+
 
 		/**
 		 * Takes the metadata from the wp_generate_attachment_metadata filter and sends the png file
@@ -66,6 +91,7 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 
 				//shrink original file
 				$filepath = $base_dir.'/'.$meta['file'];
+
 				$this->tiny_png_request( $filepath, $id );
 
 			}
@@ -82,47 +108,62 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 		 */
 		function tiny_png_request( $file, $id ) {
 
+			if ( !function_exists( 'curl_init' ) ) {
 
-			$key = get_option( 'gd_tiny_png_key', '' );
-			$key = trim( $key );
+				$msg_meta  = 'The php curl extension was not enabled and this file was not compressed.';
+			}
+			else {
+				$key = get_option( 'gd_tiny_png_key', '' );
+				$key = trim( $key );
 
-			$request = curl_init();
-			$curl_opts = array(
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_URL => $this->url,
-				CURLOPT_USERAGENT => GD_PLUGIN_NAME,
-				CURLOPT_POST => true,
-				CURLOPT_USERPWD => 'api:' . $key,
-				CURLOPT_BINARYTRANSFER => true,
-				CURLOPT_POSTFIELDS => file_get_contents( $file ),
-				//CURLOPT_CAINFO => plugin_dir_path( __FILE__ ) . "cacert.pem",
-  				CURLOPT_SSL_VERIFYPEER => false
-			);
-			curl_setopt_array( $request, $curl_opts );
-			$response = curl_exec( $request );
-			
-			if ( 201 === curl_getinfo( $request, CURLINFO_HTTP_CODE ) ) {
-				$is_error = false;
-				/* Compression was successful, retrieve output from Location header. */
-				$headers = substr( $response, 0, curl_getinfo( $request, CURLINFO_HEADER_SIZE ) );
-				foreach ( explode( "\r\n", $headers ) as $header ) {
-					if ( substr( $header, 0, 10 ) === "Location: " ) {
-						$request = curl_init();
-						curl_setopt_array( $request, array(
-								CURLOPT_URL => substr( $header, 10 ),
-								CURLOPT_RETURNTRANSFER => true
-							) );
-						file_put_contents( $file, curl_exec( $request ) );
+				$request = curl_init();
+				$curl_opts = array(
+					CURLOPT_RETURNTRANSFER => true,
+					CURLOPT_URL => $this->url,
+					CURLOPT_USERAGENT => GD_PLUGIN_NAME,
+					CURLOPT_POST => true,
+					CURLOPT_USERPWD => 'api:' . $key,
+					CURLOPT_BINARYTRANSFER => true,
+					CURLOPT_POSTFIELDS => file_get_contents( $file ),
+					//CURLOPT_CAINFO => plugin_dir_path( __FILE__ ) . "cacert.pem",
+					CURLOPT_SSL_VERIFYPEER => false
+				);
+				curl_setopt_array( $request, $curl_opts );
+				$response = curl_exec( $request );
+
+				if ( 201 === curl_getinfo( $request, CURLINFO_HTTP_CODE ) ) {
+					$is_error = false;
+					/* Compression was successful, retrieve output from Location header. */
+					$headers = substr( $response, 0, curl_getinfo( $request, CURLINFO_HEADER_SIZE ) );
+					foreach ( explode( "\r\n", $headers ) as $header ) {
+						$header_array = explode(",", $header);
+						$url_str = $header_array[3];
+						
+						$url_array = explode('"', $url_str);
+						$new_img_url = $url_array[3];
+
+							$request = curl_init();
+							curl_setopt_array( $request, array(
+									CURLOPT_URL => $new_img_url,
+									CURLOPT_RETURNTRANSFER => true,
+									CURLOPT_SSL_VERIFYPEER => false
+								) );
+							$new_file = curl_exec( $request );
+							curl_close($request);
+							
+							file_put_contents( $file, $new_file );
 					}
+
+				} else {
+
+					$is_error = true;
 				}
 
-			} else {
-				
-				$is_error = true;
+				$msg_meta          = $this->process_result( $response, $is_error );
 			}
-			
-			$msg_meta          = $this->process_result( $response, $is_error );
+
 			update_post_meta( $id, GD_TINY_PNG_META, $msg_meta );
+
 		}
 
 		/**
@@ -185,6 +226,8 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 							echo 'Original Size: '.$input_kb.' KB<br/>';
 							echo 'Current  Size: '.$output_kb.' KB<br/>';
 							echo 'Ratio: '.$data['ratio'];
+							printf( "<br><a href=\"admin.php?action=gd_tinypng_compress_existing&amp;attachment_ID=%d\">Compress now.</a>",
+								$id );
 						}
 						else {
 
