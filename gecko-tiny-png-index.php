@@ -226,6 +226,8 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 							echo 'Original Size: '.$input_kb.' KB<br/>';
 							echo 'Current  Size: '.$output_kb.' KB<br/>';
 							echo 'Ratio: '.$data['ratio'];
+							printf( "<br><a href=\"admin.php?action=gd_tinypng_compress_existing&amp;attachment_ID=%d\">Compress now.</a>",
+								$id );
 						}
 						else {
 
