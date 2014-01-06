@@ -4,7 +4,7 @@
  *	Plugin Name: Compress PNG for WP
  *	Plugin URI: http://www.geckodesigns.com
  *	Description: Compress PNG files using the TinyPNG API.
- *	Version: 1.0.1
+ *	Version: 1.0.2
  *	Author: Gecko Designs
  *	Author URI: http://www.geckodesigns.com
  *	License: GPLv2
@@ -136,14 +136,22 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 					/* Compression was successful, retrieve output from Location header. */
 					$headers = substr( $response, 0, curl_getinfo( $request, CURLINFO_HEADER_SIZE ) );
 					foreach ( explode( "\r\n", $headers ) as $header ) {
-						if ( substr( $header, 0, 10 ) === "Location: " ) {
+						$header_array = explode(",", $header);
+						$url_str = $header_array[3];
+						
+						$url_array = explode('"', $url_str);
+						$new_img_url = $url_array[3];
+
 							$request = curl_init();
 							curl_setopt_array( $request, array(
-									CURLOPT_URL => substr( $header, 10 ),
-									CURLOPT_RETURNTRANSFER => true
+									CURLOPT_URL => $new_img_url,
+									CURLOPT_RETURNTRANSFER => true,
+									CURLOPT_SSL_VERIFYPEER => false
 								) );
-							file_put_contents( $file, curl_exec( $request ) );
-						}
+							$new_file = curl_exec( $request );
+							curl_close($request);
+							
+							file_put_contents( $file, $new_file );
 					}
 
 				} else {
