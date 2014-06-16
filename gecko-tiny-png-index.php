@@ -4,7 +4,7 @@
  *	Plugin Name: Compress PNG for WP
  *	Plugin URI: http://www.geckodesigns.com
  *	Description: Compress PNG files using the TinyPNG API.
- *	Version: 1.0.2
+ *	Version: 1.1
  *	Author: Gecko Designs
  *	Author URI: http://www.geckodesigns.com
  *	License: GPLv2
@@ -33,6 +33,8 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 			add_action( 'manage_media_custom_column', array( &$this, 'render_gd_tiny_png_media_column' ), 10, 2 );
 			add_action( 'admin_action_gd_tinypng_compress_existing', array( &$this, 'compress_existing' ) );
 			add_action( 'admin_init', array( &$this, 'setup_gd_tiny_png_settings' ) );
+			add_action( 'admin_head-upload.php', array( &$this, 'add_bulk_actions_via_javascript' ) );
+			add_action( 'admin_action_bulk_compress_png', array( &$this, 'bulk_action_handler' ) );
 
 			if ( !function_exists( 'curl_init' ) ) {
 				add_action( 'admin_notices', array( &$this, 'no_curl_admin_notices' ) );
@@ -81,19 +83,20 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 				foreach ( $path_no_filename_array as $value ) {
 					$path_after_uploads .= $value.'/';
 				}
-				//loop through each file in sizes array and shrink
+				
+				//compress only large thumb instead of all sizes. Reduces calls to tinypng api.
 				$sizes_array = $meta['sizes'];
-				foreach ( $sizes_array as $image ) {
-					$filepath = $upload_dir['basedir'].'/'.$path_after_uploads.$image['file'];
-
-					$this->tiny_png_request( $filepath, $id );
+				if (array_key_exists('large', $sizes_array)) {
+					$large_thumb_array = $meta['sizes']['large'];
+					var_dump($large_thumb_array);
+					$large_filepath = $upload_dir['basedir'].'/'.$path_after_uploads.$large_thumb_array['file'];
+					$this->tiny_png_request( $large_filepath, $id );
 				}
-
-				//shrink original file
+				
+				//compress original file
 				$filepath = $base_dir.'/'.$meta['file'];
-
 				$this->tiny_png_request( $filepath, $id );
-
+				
 			}
 			return $meta;
 
@@ -163,7 +166,7 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 			}
 
 			update_post_meta( $id, GD_TINY_PNG_META, $msg_meta );
-
+			return $msg_meta;
 		}
 
 		/**
@@ -326,6 +329,48 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 			exit();
 
 		}
+		/**
+		 * Inserts option at end of bulk options list using javascript.
+		 * Borrowed from http://www.viper007bond.com/wordpress-plugins/regenerate-thumbnails/
+		 */
+		
+		function add_bulk_actions_via_javascript() { ?>
+			<script type="text/javascript">
+				jQuery(document).ready(function($){
+					$('select[name^="action"] option:last-child').after('<option value="bulk_compress_png">Bulk Compress PNG</option>');
+				});
+			</script>
+		<?php }
+
+		/**
+		 * Handles the bulk actions POST.
+		 * Sends selected PNGs to parse_meta_data to start the process of shrinking each image.
+		 *
+		 * @see  $this->parse_meta_data
+		 */
+		
+		function bulk_action_handler() {
+			check_admin_referer( 'bulk-media' );
+
+			if ( empty( $_REQUEST['media'] ) || ! is_array( $_REQUEST['media'] ) )
+				return;
+
+			$ids = $_REQUEST['media'];
+			foreach ($ids as $id) {
+				$mime_type = get_post_mime_type( $id );
+
+					if ( 'image/png' == $mime_type ) {
+						$original_meta = wp_get_attachment_metadata( $id );
+
+						$new_meta = $this->parse_meta_data( $original_meta, $id );
+
+						wp_update_attachment_metadata( $id, $new_meta );
+						
+					}
+			}
+			
+		}
+
 
 
 	}//end class GD_TINY_PNG

@@ -3,11 +3,10 @@ Contributors: geckodesigns
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3CHBFNXBXD3DW
 Tags: media, images, image, tinypng, upload, png, resize, shrink
 Requires at least: 3.0.1
-Tested up to: 3.8
-Stable tag: 1.0.2
+Tested up to: 3.9.1
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-
 
 Compress PNG files using the TinyPNG API.
 
@@ -20,6 +19,8 @@ Compress PNG for WP allows users to shrink PNG files using the TinyPNG API. File
 1. Insert your TinyPNG API key and save changes. If you do not yet have a key, get one from [TinyPNG]( https://tinypng.com/developers).
 1. Start uploading PNG files and they will be automatically resized (if you have chosen to allow auto shrinking on upload in the 'Settings > Media' page).
 1. Visit 'Media > Library' to see information on your resized files or to manually resize existing PNG files.
+
+For more information view our [Compress PNG for WP page](https://www.geckodesigns.com/services/website-design/website-plugins/compress-png-plugin-wordpress/).
 
 == Installation ==
 
@@ -57,6 +58,10 @@ Compress PNG for WP uses the cURL php extension which most servers should alread
 
 
 == Changelog ==
+
+= 1.1 =
+*Added bulk compression of PNG files from Media Library.
+*Only compress large and original sizes to reduce TinyPNG calls.
 
 = 1.0.2 =
 *bug fixes
