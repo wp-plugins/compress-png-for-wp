@@ -88,7 +88,6 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 				$sizes_array = $meta['sizes'];
 				if (array_key_exists('large', $sizes_array)) {
 					$large_thumb_array = $meta['sizes']['large'];
-					var_dump($large_thumb_array);
 					$large_filepath = $upload_dir['basedir'].'/'.$path_after_uploads.$large_thumb_array['file'];
 					$this->tiny_png_request( $large_filepath, $id );
 				}
