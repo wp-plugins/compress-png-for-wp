@@ -1,5 +1,4 @@
 <?php
-
 /*
  *	Plugin Name: Compress PNG for WP
  *	Plugin URI: http://www.geckodesigns.com
