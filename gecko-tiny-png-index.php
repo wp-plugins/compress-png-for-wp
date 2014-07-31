@@ -3,7 +3,7 @@
  *	Plugin Name: Compress PNG for WP
  *	Plugin URI: http://www.geckodesigns.com
  *	Description: Compress PNG files using the TinyPNG API.
- *	Version: 1.1
+ *	Version: 1.2
  *	Author: Gecko Designs
  *	Author URI: http://www.geckodesigns.com
  *	License: GPLv2
@@ -19,6 +19,7 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 		public function __construct() {
 
 			define( 'GD_TINY_PNG_META', 'tiny_png_response' );
+			define( 'GD_TINY_PNG_PREV_COMPRESSED', 'prev_compressed' );
 			define( 'GD_PLUGIN_NAME', 'Compress PNG for WP' );
 			$is_auto_shrink = get_option( 'gd_tiny_png_auto_shrink', 'on' );
 
@@ -68,7 +69,14 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 		function parse_meta_data( $meta , $id ) {
 			//get mime-type
 			$mime_type      = get_post_mime_type( $id );
+			$prev_compressed = get_post_meta( $id, GD_TINY_PNG_PREV_COMPRESSED, true );
+			//initial post meta is an empty string
+			if ( !is_array( $prev_compressed ) ) {
+				$prev_compressed = array();
+			}
+			$compressed_sizes = $prev_compressed;
 
+			
 
 			if ( 'image/png' == $mime_type ) {
 				//get full path to uploaded image
@@ -82,19 +90,46 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 				foreach ( $path_no_filename_array as $value ) {
 					$path_after_uploads .= $value.'/';
 				}
-				
-				//compress only large thumb instead of all sizes. Reduces calls to tinypng api.
-				$sizes_array = $meta['sizes'];
-				if (array_key_exists('large', $sizes_array)) {
-					$large_thumb_array = $meta['sizes']['large'];
-					$large_filepath = $upload_dir['basedir'].'/'.$path_after_uploads.$large_thumb_array['file'];
-					$this->tiny_png_request( $large_filepath, $id );
+
+				//compress thumbnails selected by user in Settings -> Media page.
+				$sizes_option = get_option( 'gd_tiny_png_sizes_option' );
+				$sizes_meta = $meta['sizes'];
+				if ( is_array( $sizes_option ) ) {
+					foreach ( $sizes_option as $size_key => $option ) {
+						if ( array_key_exists( $size_key, $sizes_meta ) ) {
+							$thumb_array = $meta['sizes'][$size_key];
+							$this_filepath = $upload_dir['basedir'].'/'.$path_after_uploads.$thumb_array['file'];
+
+							//Only compress if not already compressed
+							if ( !in_array( $size_key, $prev_compressed ) ) {
+								$msg_meta = $this->tiny_png_request( $this_filepath, $id );
+								if ( is_array( $msg_meta ) && array_key_exists( 'ratio', $msg_meta ) ) {
+									//successful compression
+									array_push( $compressed_sizes, $size_key );
+								}
+
+							}
+
+
+
+						}
+					}
+
 				}
-				
-				//compress original file
+
+
+
+				//compress original file only if not already compressed.
 				$filepath = $base_dir.'/'.$meta['file'];
-				$this->tiny_png_request( $filepath, $id );
-				
+				if ( !in_array( 'original', $prev_compressed ) ) {
+					$msg_meta = $this->tiny_png_request( $filepath, $id, true );
+					if ( is_array( $msg_meta ) && array_key_exists( 'ratio', $msg_meta ) ) {
+						//successful compression
+						array_push( $compressed_sizes, 'original' );
+					}
+
+				}
+				update_post_meta( $id, GD_TINY_PNG_PREV_COMPRESSED,  $compressed_sizes, $prev_compressed );
 			}
 			return $meta;
 
@@ -104,10 +139,11 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 		 * POSTs a file to the Tiny PNG API. Sends result to process_result(). Updates post meta to
 		 * keep track of information on the file.
 		 *
-		 * @param string  $file File path for file to be sent to Tiny PNG
-		 * @param int     $id   Id of the current post related to the file.
+		 * @param string  $file        File path for file to be sent to Tiny PNG
+		 * @param int     $id          Id of the current post related to the file.
+		 * @param boolean $is_original Used to determine whether to update post meta or not
 		 */
-		function tiny_png_request( $file, $id ) {
+		function tiny_png_request( $file, $id, $is_original = false ) {
 
 			if ( !function_exists( 'curl_init' ) ) {
 
@@ -137,22 +173,22 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 					/* Compression was successful, retrieve output from Location header. */
 					$headers = substr( $response, 0, curl_getinfo( $request, CURLINFO_HEADER_SIZE ) );
 					foreach ( explode( "\r\n", $headers ) as $header ) {
-						$header_array = explode(",", $header);
+						$header_array = explode( ",", $header );
 						$url_str = $header_array[3];
-						
-						$url_array = explode('"', $url_str);
+
+						$url_array = explode( '"', $url_str );
 						$new_img_url = $url_array[3];
 
-							$request = curl_init();
-							curl_setopt_array( $request, array(
-									CURLOPT_URL => $new_img_url,
-									CURLOPT_RETURNTRANSFER => true,
-									CURLOPT_SSL_VERIFYPEER => false
-								) );
-							$new_file = curl_exec( $request );
-							curl_close($request);
-							
-							file_put_contents( $file, $new_file );
+						$request = curl_init();
+						curl_setopt_array( $request, array(
+								CURLOPT_URL => $new_img_url,
+								CURLOPT_RETURNTRANSFER => true,
+								CURLOPT_SSL_VERIFYPEER => false
+							) );
+						$new_file = curl_exec( $request );
+						curl_close( $request );
+
+						file_put_contents( $file, $new_file );
 					}
 
 				} else {
@@ -162,8 +198,10 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 
 				$msg_meta          = $this->process_result( $response, $is_error );
 			}
+			if ( $is_original ) {
+				update_post_meta( $id, GD_TINY_PNG_META, $msg_meta );
+			}
 
-			update_post_meta( $id, GD_TINY_PNG_META, $msg_meta );
 			return $msg_meta;
 		}
 
@@ -213,6 +251,7 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 			if ( 'gd_tiny_png' == $column_name ) {
 				// Check if tiny_png_response field is set for this $id
 				$post_meta = get_post_meta( $id, GD_TINY_PNG_META );
+				$prev_compressed = get_post_meta( $id, GD_TINY_PNG_PREV_COMPRESSED, true );
 				$mime_type = get_post_mime_type( $id );
 
 				if ( 'image/png' == $mime_type ) {
@@ -226,9 +265,25 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 
 							echo 'Original Size: '.$input_kb.' KB<br/>';
 							echo 'Current  Size: '.$output_kb.' KB<br/>';
-							echo 'Ratio: '.$data['ratio'];
+							echo 'Ratio: '.$data['ratio'].'<br/>';
+							if ( is_array( $prev_compressed ) && !empty( $prev_compressed ) ) {
+								echo 'Compressed Sizes: <br/>';
+								echo '<div style="padding-left:1em;">';
+								$i = 0;
+								$len = count($prev_compressed);
+								foreach ( $prev_compressed as $size ) {
+									if ($i == $len - 1){
+										echo $size;
+									}else{
+										echo "$size, ";
+									}
+									$i++;
+								}
+								echo '</div>';
+							}
 							printf( "<br><a href=\"admin.php?action=gd_tinypng_compress_existing&amp;attachment_ID=%d\">Compress now.</a>",
 								$id );
+
 						}
 						else {
 
@@ -257,9 +312,12 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 			add_settings_section( 'gd_tiny_png_settings', 'Gecko Designs Tiny PNG', array( &$this, 'render_gd_tiny_png_settings' ), 'media' );
 			add_settings_field( 'gd_tiny_png_key', 'Your Tiny PNG Key', array( &$this, 'gd_tiny_png_render_key_field' ), 'media', 'gd_tiny_png_settings' );
 			add_settings_field( 'gd_tiny_png_auto_shrink', 'Automatically shrink files on upload?', array( &$this, 'gd_tiny_png_render_auto_shrink_field' ), 'media', 'gd_tiny_png_settings' );
+			add_settings_field( 'gd_tiny_png_sizes_option', 'Which file sizes do you want to shrink?', array( &$this, 'gd_tiny_png_render_sizes_option' ), 'media', 'gd_tiny_png_settings' );
 
 			register_setting( 'media', 'gd_tiny_png_key' );
 			register_setting( 'media', 'gd_tiny_png_auto_shrink' );
+			register_setting( 'media', 'gd_tiny_png_sizes_option' );
+
 		}
 
 		/**
@@ -286,6 +344,8 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 	        <?php
 		}
 
+
+
 		/**
 		 * Display check box, label, and description for turning on and off auto shrink.
 		 */
@@ -297,6 +357,48 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 	        <span class="description"> &nbsp; By default GD Tiny PNG will automatically shrink all uploaded PNG files. Uncheck this box to disable this feature.</span>
 	        <?php
 
+		}
+
+		function gd_tiny_png_render_sizes_option() {
+			$setting = 'gd_tiny_png_sizes_option';
+			$value = get_option( $setting );?>
+			<span class="description"> By default GD Tiny PNG will shrink the orginal file. Optionally, you can choose to compress the other image sizes created by WordPress here. Remember each additional image size will affect your TinyPNG monthly limit.</span><br>
+
+			<?php
+			global $_wp_additional_image_sizes;
+
+			$sizes = array();
+			$get_intermediate_image_sizes = get_intermediate_image_sizes();
+
+			// Create the full array with sizes. borrowed from http://codex.wordpress.org/Function_Reference/get_intermediate_image_sizes
+			foreach ( $get_intermediate_image_sizes as $_size ) {
+
+				if ( in_array( $_size, array( 'thumbnail', 'medium', 'large' ) ) ) {
+
+					$sizes[ $_size ]['width'] = get_option( $_size . '_size_w' );
+					$sizes[ $_size ]['height'] = get_option( $_size . '_size_h' );
+
+
+				} elseif ( isset( $_wp_additional_image_sizes[ $_size ] ) ) {
+
+					$sizes[ $_size ] = array(
+						'width' => $_wp_additional_image_sizes[ $_size ]['width'],
+						'height' => $_wp_additional_image_sizes[ $_size ]['height'],
+
+					);
+
+				}
+
+			}
+
+
+
+?>
+			<?php foreach ( $sizes as $size_key => $size ) : ?>
+				 <input type="checkbox" id='<?php echo $size_key ;?>' name="<?php echo $setting.'['.$size_key.']'; ?>" <?php if ( isset( $value[$size_key] ) && $value[$size_key] == 'on' ) { echo ' checked="checked" '; } ?>/>
+	        	<label for="<?php echo $setting.'['.$size_key.']'; ?>"><?php echo sprintf( '%s - %d x %d', $size_key, $size['width'], $size['height'] ); ?></label><br>
+
+	        <?php endforeach ;
 		}
 
 		/**
@@ -331,7 +433,7 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 		 * Inserts option at end of bulk options list using javascript.
 		 * Borrowed from http://www.viper007bond.com/wordpress-plugins/regenerate-thumbnails/
 		 */
-		
+
 		function add_bulk_actions_via_javascript() { ?>
 			<script type="text/javascript">
 				jQuery(document).ready(function($){
@@ -346,7 +448,7 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 		 *
 		 * @see  $this->parse_meta_data
 		 */
-		
+
 		function bulk_action_handler() {
 			check_admin_referer( 'bulk-media' );
 
@@ -354,19 +456,19 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 				return;
 
 			$ids = $_REQUEST['media'];
-			foreach ($ids as $id) {
+			foreach ( $ids as $id ) {
 				$mime_type = get_post_mime_type( $id );
 
-					if ( 'image/png' == $mime_type ) {
-						$original_meta = wp_get_attachment_metadata( $id );
+				if ( 'image/png' == $mime_type ) {
+					$original_meta = wp_get_attachment_metadata( $id );
 
-						$new_meta = $this->parse_meta_data( $original_meta, $id );
+					$new_meta = $this->parse_meta_data( $original_meta, $id );
 
-						wp_update_attachment_metadata( $id, $new_meta );
-						
-					}
+					wp_update_attachment_metadata( $id, $new_meta );
+
+				}
 			}
-			
+
 		}
 
 
