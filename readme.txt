@@ -13,11 +13,13 @@ Compress PNG files using the TinyPNG API.
 == Description ==
 Compress PNG for WP allows users to shrink JPEG/PNG files using the TinyPNG API. Files can be automatically resized when uploaded as well as manually resized in the Media Library.
 
+**v1.3 Added Support for JPEG Compression via TinyJPEG, Works the same way as PNG files.**
+
 **How to use Compress PNG for WP**
 
 1. Visit 'Settings > Media' from the admin dashboard.
 1. Insert your TinyPNG API key and save changes. If you do not yet have a key, get one from [TinyPNG]( https://tinypng.com/developers). You can also select to auto compress on upload as well as which additional image sizes will be compressed from this page.
-1. Start uploading JEPG/PNG files and they will be automatically resized (if you have chosen to allow auto shrinking on upload in the 'Settings > Media' page).
+1. Start uploading JPEG/PNG files and they will be automatically resized (if you have chosen to allow auto shrinking on upload in the 'Settings > Media' page).
 1. Visit 'Media > Library' to see information on your resized files or to manually resize existing PNG files.
 
 For more information view our [Compress PNG for WP page](https://www.geckodesigns.com/services/website-design/website-plugins/compress-png-plugin-wordpress/).
@@ -28,17 +30,17 @@ For more information view our [Compress PNG for WP page](https://www.geckodesign
 
 1. Visit 'Plugins > Add New'
 1. Search for ‘Compress PNG for WP.
-1. Activate Compress PNG for WP from your Plugins page. 
+1. Activate Compress PNG for WP from your Plugins page.
 
 **From Wordpress.org**
 
 1. Download Compress PNG for WP.
 1. Upload the gecko-tiny-png folder to your '/wp-content/plugins/' directory.
-1. Activate Compress PNG for WP from your Plugins page. 
+1. Activate Compress PNG for WP from your Plugins page.
 
 == Frequently Asked Questions ==
 
-= After uploading a PNG file or manually shrinking, I get an error saying Unauthorized: Credentials are invalid. What is wrong?  =
+= After uploading a JPEG/PNG file or manually shrinking, I get an error saying Unauthorized: Credentials are invalid. What is wrong?  =
 
 Make sure to enter in your API key obtained from [TinyPNG]( https://tinypng.com/developers) into the correct text box in the 'Settings > Media' page. If you do not remember your key, you can get it by entering in your email in the 'Already Subscribed' box on the [TinyPNG Developers]( https://tinypng.com/developers) page and following the link in the email sent to you.
 
@@ -56,7 +58,7 @@ As of version 1.2 users can select exactly which additional images that are comp
 
 = How can I compress the additional image sizes that WordPress creates? =
 
-You can select which additional image size to compress via the 'Settings > Media' page. Just select the image sizes and compress your image again in the Library page. 
+You can select which additional image size to compress via the 'Settings > Media' page. Just select the image sizes and compress your image again in the Library page.
 
 *Note: When compressing an image that was originally compressed in a version prior to 1.2, initially any previously compressed images will be compressed again. However, subsequent compressions will only compress images that have not yet been compressed*.
 
@@ -67,6 +69,10 @@ You can select which additional image size to compress via the 'Settings > Media
 
 
 == Changelog ==
+
+= 1.3 =
+* Fixed corrupted image bug from recent TinyPNG api update
+* Added support for compressing JPEG images via TinyJPEG
 
 = 1.2 =
 * Users can select which additional image sizes to compress.
@@ -86,6 +92,9 @@ You can select which additional image size to compress via the 'Settings > Media
 * Initial release
 
 == Upgrade Notice ==
+= 1.3 =
+Allows users to compress JPEG images as well as PNG images.  This is provided via TinyJPEG(TinyPNG's new project) api. JPEG and PNG compression can now be done at the same time and via the same interface (automatic upload, bulk/single compression).
+
 = 1.2 =
 Allows users to choose which additional images (thumbnail, medium, large) to compress and only compresses images if not already compressed.
 
