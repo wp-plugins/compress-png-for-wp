@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: media, images, image, tinypng, tinyjpeg, upload, png, jpeg, resize, shrink
 Requires at least: 3.0.1
 Tested up to: 4.0.1
-Stable tag: 1.3
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,6 +69,8 @@ You can select which additional image size to compress via the 'Settings > Media
 
 
 == Changelog ==
+= 1.3.1 =
+* Updated readme
 
 = 1.3 =
 * Fixed corrupted image bug from recent TinyPNG api update
