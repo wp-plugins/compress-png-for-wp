@@ -164,7 +164,6 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 				$result_JSON = json_decode( $response );
 
 				if ( 201 === curl_getinfo( $request, CURLINFO_HTTP_CODE ) ) {
-					//error_log(var_dump($result_JSON),0);
 					/* Compression was successful, retrieve output from the JSON response. */
 					$new_img_url = $result_JSON->{'output'}->{'url'};
 
@@ -228,8 +227,9 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 
 						$data = $post_meta[0];
 						if ( is_array( $data ) ) {
-							$input_kb  = round( intval( $data['input'] )/1024 ) ;
-							$output_kb = round( intval( $data['output'] )/1024 );
+							//use  kB (1000 byte==1 kilobytes) not KiB (1024 byte == 1 Kibibyte) converstion , to match tinyPNG's unit of measurement, wordpress's size_format() displays incorrent unit names, ie. kB instead of KiB and so will not match this filesize
+							$input_kb  = round( intval( $data['input'] )/1000 ) ;
+							$output_kb = round( intval( $data['output'] )/1000 );
 
 							echo 'Original Size: '.$input_kb.' KB<br/>';
 							echo 'Current  Size: '.$output_kb.' KB<br/>';

@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: media, images, image, tinypng, tinyjpeg, upload, png, jpeg, resize, shrink
 Requires at least: 3.0.1
 Tested up to: 4.0.1
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,10 @@ For more information view our [Compress PNG for WP page](https://www.geckodesign
 
 == Frequently Asked Questions ==
 
+= Broken Images after Uploading? =
+
+Yes a recent API update from TinyPNG was causing images sent for compression to be overwritten with 0 size.  This has been since fixed in v1.3 but any previously broken images will have to re-uploaded.
+
 = After uploading a JPEG/PNG file or manually shrinking, I get an error saying Unauthorized: Credentials are invalid. What is wrong?  =
 
 Make sure to enter in your API key obtained from [TinyPNG]( https://tinypng.com/developers) into the correct text box in the 'Settings > Media' page. If you do not remember your key, you can get it by entering in your email in the 'Already Subscribed' box on the [TinyPNG Developers]( https://tinypng.com/developers) page and following the link in the email sent to you.
@@ -69,6 +73,9 @@ You can select which additional image size to compress via the 'Settings > Media
 
 
 == Changelog ==
+= 1.3.2 =
+* Fixed unit of measurement for before and after compression file size, now uses kB instead of KiB, to match tinyPNG's unit of measurement
+
 = 1.3.1 =
 * Updated readme
 
