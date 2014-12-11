@@ -3,7 +3,7 @@
  *	Plugin Name: Compress PNG for WP
  *	Plugin URI: http://www.geckodesigns.com
  *	Description: Compress PNG files using the TinyPNG API.
- *	Version: 1.3
+ *	Version: 1.3.3
  *	Author: Gecko Designs
  *	Author URI: http://www.geckodesigns.com
  *	License: GPLv2
