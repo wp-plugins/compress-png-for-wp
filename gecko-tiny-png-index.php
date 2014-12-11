@@ -180,7 +180,7 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 
 					$input_size  = $result_JSON->{'input'}->{'size'};
 					$output_size = $result_JSON->{'output'}->{'size'};
-					$ratio       = $result_JSON->{'output'}->{'ratio'};
+					$ratio       = $result_JSON->{'output'}->{'ratio'}*100;
 					$msg_meta    = array( 'input'  => $input_size,
 											'output' => $output_size,
 											'ratio'  => $ratio );
@@ -233,7 +233,7 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 
 							echo 'Original Size: '.$input_kb.' KB<br/>';
 							echo 'Current  Size: '.$output_kb.' KB<br/>';
-							echo 'Ratio: '.$data['ratio'].'<br/>';
+							echo 'Ratio: '.$data['ratio'].'% <br/>';
 							if ( is_array( $prev_compressed ) && !empty( $prev_compressed ) ) {
 								echo 'Compressed Sizes: <br/>';
 								echo '<div style="padding-left:1em;">';
