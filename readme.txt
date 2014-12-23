@@ -20,7 +20,7 @@ Compress PNG for WP allows users to shrink JPEG/PNG files using the TinyPNG API.
 1. Visit 'Settings > Media' from the admin dashboard.
 1. Insert your TinyPNG API key and save changes. If you do not yet have a key, get one from [TinyPNG]( https://tinypng.com/developers). You can also select to auto compress on upload as well as which additional image sizes will be compressed from this page.
 1. Start uploading JPEG/PNG files and they will be automatically resized (if you have chosen to allow auto shrinking on upload in the 'Settings > Media' page).
-1. Visit 'Media > Library' to see information on your resized files or to manually resize existing PNG files.
+1. Visit 'Media > Library' to see information on your resized files or to manually resize existing JPEG/PNG files.
 
 For more information view our [Compress PNG for WP page](https://www.geckodesigns.com/services/website-design/website-plugins/compress-png-plugin-wordpress/).
 
@@ -74,8 +74,8 @@ You can select which additional image size to compress via the 'Settings > Media
 
 == Changelog ==
 = 1.3.4 =
-* Bulk Compress JPEG bug fix
- 
+* Bulk compress JPEG bug fix
+
 = 1.3.3 =
 * Changed ratio display value to percentage
 
