@@ -3,7 +3,7 @@
  *	Plugin Name: Compress PNG for WP
  *	Plugin URI: http://www.geckodesigns.com
  *	Description: Compress PNG files using the TinyPNG API.
- *	Version: 1.3.4
+ *	Version: 1.3.5
  *	Author: Gecko Designs
  *	Author URI: http://www.geckodesigns.com
  *	License: GPLv2
@@ -166,24 +166,28 @@ if ( !class_exists( 'GD_Tiny_PNG' ) ) {
 				if ( 201 === curl_getinfo( $request, CURLINFO_HTTP_CODE ) ) {
 					/* Compression was successful, retrieve output from the JSON response. */
 					$new_img_url = $result_JSON->{'output'}->{'url'};
-
 					$request = curl_init();
 					curl_setopt_array( $request, array(
 							CURLOPT_URL => $new_img_url,
 							CURLOPT_RETURNTRANSFER => true,
-							CURLOPT_SSL_VERIFYPEER => true
+							CURLOPT_SSL_VERIFYPEER => false
 						) );
 					$new_file = curl_exec( $request );
+					$filesize = curl_getinfo($request, CURLINFO_SIZE_DOWNLOAD);
 					curl_close( $request );
 
-					file_put_contents( $file, $new_file );
-
-					$input_size  = $result_JSON->{'input'}->{'size'};
-					$output_size = $result_JSON->{'output'}->{'size'};
-					$ratio       = $result_JSON->{'output'}->{'ratio'}*100;
-					$msg_meta    = array( 'input'  => $input_size,
+					if(!$filesize == 0) {
+						/* Fetching the compressed image was successful*/
+						file_put_contents( $file, $new_file );
+						$input_size  = $result_JSON->{'input'}->{'size'};
+						$output_size = $result_JSON->{'output'}->{'size'};
+						$ratio       = $result_JSON->{'output'}->{'ratio'}*100;
+						$msg_meta    = array( 'input'  => $input_size,
 											'output' => $output_size,
 											'ratio'  => $ratio );
+					} else {
+						$msg_meta = 'There was an error downloading your compressed image, the original image was saved instead.';	
+					}
 				} else {
 					$msg_meta = $result_JSON->{'error'} . ': ' . $result_JSON->{'message'};
 					$msg_meta .= '. There was an error compressing your image, the original image was saved instead.';
