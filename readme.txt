@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: media, images, image, tinypng, tinyjpeg, upload, png, jpeg, resize, shrink
 Requires at least: 3.0.1
 Tested up to: 4.1
-Stable tag: 1.3.4
+Stable tag: 1.3.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,10 @@ You can select which additional image size to compress via the 'Settings > Media
 
 
 == Changelog ==
+= 1.3.5 =
+* Localhost development curl ssl fix, was returning 0 byte image when ran in localhost enviorment only.
+* Added filesize check for fetched image, returns error message now instead of overwriting image with 0 bytes.
+
 = 1.3.4 =
 * Bulk compress JPEG bug fix
 
